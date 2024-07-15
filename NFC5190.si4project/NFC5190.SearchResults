@@ -1,0 +1,23 @@
+---- phOsal_EventPend Matches (22 in 13 files) ----
+phceT4T_Sw_AppProcessCmd in phceT4T_Sw.c (NxpNfcRdLib\comps\phceT4T\src\Sw) :         PH_CHECK_SUCCESS_FCT(status, phOsal_EventPend((volatile phOsal_Event_t * )(&pDataParams->T4TEventObj.EventHandle), E_OS_EVENT_OPT_PEND_SET_ANY, 0xFFFFFFFFU,
+phceT4T_Sw_Int_Activate in phceT4T_Sw_Int.c (NxpNfcRdLib\comps\phceT4T\src\Sw) :                     PH_CHECK_SUCCESS_FCT(status, phOsal_EventPend((volatile phOsal_Event_t * )(&pDataParams->T4TEventObj.EventHandle), E_OS_EVENT_OPT_PEND_SET_ANY, 0xFFFFFFFFU,
+phhalHw_Pn5180_Exchange in phhalHw_Pn5180.c (NxpNfcRdLib\comps\phhalHw\src\Pn5180) :             (void)phOsal_EventPend(&xEventHandle, (phOsal_EventOpt_t)(E_OS_EVENT_OPT_PEND_SET_ANY | E_OS_EVENT_OPT_PEND_CLEAR_ON_EXIT),
+phhalHw_Pn5180_Receive in phhalHw_Pn5180.c (NxpNfcRdLib\comps\phhalHw\src\Pn5180) :                 status = phOsal_EventPend((volatile phOsal_Event_t * )(&pDataParams->HwEventObj.EventHandle), E_OS_EVENT_OPT_PEND_SET_ANY, 400U, E_PH_OSAL_EVT_RF, NULL);
+phhalHw_Pn5180_I18000p3m3Inventory in phhalHw_Pn5180.c (NxpNfcRdLib\comps\phhalHw\src\Pn5180) :             (void)phOsal_EventPend(&xEventHandle, (phOsal_EventOpt_t)(E_OS_EVENT_OPT_PEND_SET_ANY | E_OS_EVENT_OPT_PEND_CLEAR_ON_EXIT),
+phhalHw_Pn5180_EventWait in phhalHw_Pn5180.c (NxpNfcRdLib\comps\phhalHw\src\Pn5180) :     return phOsal_EventPend((volatile phOsal_Event_t *)(&pDataParams->HwEventObj.EventHandle), E_OS_EVENT_OPT_PEND_SET_ANY, dwEventTimeout,
+phhalHw_Pn5180_WaitIrq in phhalHw_Pn5180_Wait.c (NxpNfcRdLib\comps\phhalHw\src\Pn5180) :             statusTmp = phOsal_EventPend((volatile phOsal_Event_t * )(&pDataParams->HwEventObj.EventHandle), E_OS_EVENT_OPT_PEND_SET_ANY, PHOSAL_MAX_DELAY,
+phhalHw_Pn5190_Exchange in phhalHw_Pn5190.c (NxpNfcRdLib\comps\phhalHw\src\Pn5190) :               (void)phOsal_EventPend(&xEventHandle, E_OS_EVENT_OPT_PEND_SET_ANY | E_OS_EVENT_OPT_PEND_CLEAR_ON_EXIT,
+phhalHw_Pn5190_I18000p3m3Inventory in phhalHw_Pn5190.c (NxpNfcRdLib\comps\phhalHw\src\Pn5190) :             (void)phOsal_EventPend(&xEventHandle, (phOsal_EventOpt_t)(E_OS_EVENT_OPT_PEND_SET_ANY | E_OS_EVENT_OPT_PEND_CLEAR_ON_EXIT),
+phhalHw_Pn5190_Send in phhalHw_Pn5190_InstMngr.c (NxpNfcRdLib\comps\phhalHw\src\Pn5190) :                 status = phOsal_EventPend(
+phhalHw_Pn5190_WaitIrq in phhalHw_Pn5190_Wait.c (NxpNfcRdLib\comps\phhalHw\src\Pn5190) :     PH_CHECK_SUCCESS_FCT(status, phOsal_EventPend(
+phhalHw_Pn5190_WaitForEvent in phhalHw_Pn5190_Wait.c (NxpNfcRdLib\comps\phhalHw\src\Pn5190) :     PH_CHECK_SUCCESS_FCT(statustmp, phOsal_EventPend(
+phhalHw_Pn5190_Wait_IrqAbortHandling in phhalHw_Pn5190_Wait.c (NxpNfcRdLib\comps\phhalHw\src\Pn5190) :     PH_CHECK_SUCCESS_FCT(status, phOsal_EventPend(
+phhalHw_Pn5190_EventWait_AbortHandling in phhalHw_Pn5190_Wait.c (NxpNfcRdLib\comps\phhalHw\src\Pn5190) :     PH_CHECK_SUCCESS_FCT(status, phOsal_EventPend(
+phhalHw_Rc663_EventWait in phhalHw_Rc663.c (NxpNfcRdLib\comps\phhalHw\src\Rc663) :     return phOsal_EventPend((volatile phOsal_Event_t * )(&pDataParams->HwEventObj.EventHandle), E_OS_EVENT_OPT_PEND_SET_ANY,
+phhalHw_Rc663_CheckForEmdError in phhalHw_Rc663_Int.c (NxpNfcRdLib\comps\phhalHw\src\Rc663) :         status = phOsal_EventPend((volatile phOsal_Event_t * )(&pDataParams->HwEventObj.EventHandle), E_OS_EVENT_OPT_PEND_SET_ANY,
+phhalHw_Rc663_WaitIrq in phhalHw_Rc663_Wait.c (NxpNfcRdLib\comps\phhalHw\src\Rc663) :     PH_CHECK_SUCCESS_FCT(statusTmp, phOsal_EventPend((volatile phOsal_Event_t * )(&pDataParams->HwEventObj.EventHandle), E_OS_EVENT_OPT_PEND_SET_ANY,
+phlnLlcp_Sw_WaitForActivation in phlnLlcp_Sw.c (NxpNfcRdLib\comps\phlnLlcp\src\Sw) :     if (phOsal_EventPend((volatile phOsal_Event_t * )(&pDataParams->LlcpEventObj.EventHandle), E_OS_EVENT_OPT_PEND_SET_ANY, PHOSAL_MAX_DELAY, E_PH_OSAL_EVT_LLCP_ACTIVATED,
+phOsal.h (RTOS\phOsal\inc) line 101 :  * | \ref phOsal_EventPend
+phOsal.h (RTOS\phOsal\inc) line 512 :  * Now the user has to use phOsal_EventPend() function to wait/pend on events.
+phOsal.h (RTOS\phOsal\inc) line 527 : extern phStatus_t phOsal_EventPend(
+phOsal_NullOs.c (RTOS\phOsal\src\NullOs) line 109 : phStatus_t phOsal_EventPend(volatile phOsal_Event_t * eventHandle, phOsal_EventOpt_t options, phOsal_Ticks_t ticksToWait,

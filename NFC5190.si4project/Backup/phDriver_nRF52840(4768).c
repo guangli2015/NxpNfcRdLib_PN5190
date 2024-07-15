@@ -1,0 +1,296 @@
+/*----------------------------------------------------------------------------*/
+/* Copyright 2017-2022 NXP                                                    */
+/*                                                                            */
+/* NXP Confidential. This software is owned or controlled by NXP and may only */
+/* be used strictly in accordance with the applicable license terms.          */
+/* By expressly accepting such terms or by downloading, installing,           */
+/* activating and/or otherwise using the software, you are agreeing that you  */
+/* have read, and that you agree to comply with and are bound by, such        */
+/* license terms. If you do not agree to be bound by the applicable license   */
+/* terms, then you may not retain, install, activate or otherwise use the     */
+/* software.                                                                  */
+/*----------------------------------------------------------------------------*/
+
+/** \file
+* Generic phDriver Component of Reader Library Framework.
+* $Author$
+* $Revision$
+* $Date$
+*
+*/
+
+/* *****************************************************************************************************************
+ * Includes
+ * ***************************************************************************************************************** */
+#include "phDriver.h"
+#include "BoardSelection.h"
+#include "fsl_device_registers.h"
+#include <fsl_port.h>
+#include <fsl_gpio.h>
+#include <fsl_pit.h>
+
+/* *****************************************************************************************************************
+ * Internal Definitions
+ * ***************************************************************************************************************** */
+#define KINETIS_TIMER_MAX_32BIT      0xFFFFFFFFU
+
+/* *****************************************************************************************************************
+ * Type Definitions
+ * ***************************************************************************************************************** */
+
+/* *****************************************************************************************************************
+ * Global and Static Variables
+ * Total Size: NNNbytes
+ * ***************************************************************************************************************** */
+/* Array initializer of PORT peripheral base pointers */
+static const PORT_Type *pPortsBaseAddr[] = PORT_BASE_PTRS;
+/* Array initializer of GPIO peripheral base pointers */
+static const GPIO_Type *pGpiosBaseAddr[] = GPIO_BASE_PTRS;
+/* Clock ip name array for PORT. */
+static const clock_ip_name_t pPortsClock[] = PORT_CLOCKS;
+/* Used to map phDriver Interrupt triggers to Kinetis */
+static const port_interrupt_t aInterruptTypes[] = {kPORT_InterruptLogicZero, /* Unused. */
+        kPORT_InterruptLogicZero,
+        kPORT_InterruptLogicOne,
+        kPORT_InterruptRisingEdge,
+        kPORT_InterruptFallingEdge,
+        kPORT_InterruptEitherEdge,
+};
+
+static pphDriver_TimerCallBck_t pPitTimerCallBack;
+static volatile uint8_t dwTimerExp;
+
+/* *****************************************************************************************************************
+ * Private Functions Prototypes
+ * ***************************************************************************************************************** */
+static void phDriver_PitTimerIsrCallBack(void);
+
+
+void my_timer_handler(struct k_timer *dummy)
+{
+      if(NULL != pPitTimerCallBack)
+    	{
+    		pPitTimerCallBack();
+    	}
+}
+
+K_TIMER_DEFINE(my_timer, my_timer_handler, NULL);
+
+/* *****************************************************************************************************************
+ * Public Functions
+ * ***************************************************************************************************************** */
+phStatus_t phDriver_TimerStart(phDriver_Timer_Unit_t eTimerUnit, uint32_t dwTimePeriod, pphDriver_TimerCallBck_t pTimerCallBack)
+{
+
+  
+
+	pPitTimerCallBack = pTimerCallBack;
+	
+	if(PH_DRIVER_TIMER_SECS == eTimerUnit)
+   	{
+   	     k_timer_start(&my_timer, K_SEC(dwTimePeriod), K_NO_WAIT);
+   	}
+   else if(PH_DRIVER_TIMER_MILLI_SECS == eTimerUnit)
+   	{
+   		
+		 k_timer_start(&my_timer, K_MSEC(dwTimePeriod), K_NO_WAIT);
+   	}
+   else if(PH_DRIVER_TIMER_MICRO_SECS == eTimerUnit)
+   	{
+   		k_timer_start(&my_timer, K_USEC(dwTimePeriod), K_NO_WAIT);
+   	}
+
+   	if(NULL == pTimerCallBack)
+    	{
+    		k_timer_status_sync(&my_timer);
+    	}
+    return PH_DRIVER_SUCCESS;
+}
+
+phStatus_t phDriver_TimerStop(void)
+{
+	k_timer_stop(&my_timer);
+
+
+    return PH_DRIVER_SUCCESS;
+}
+
+phStatus_t phDriver_PinConfig(uint32_t dwPinNumber, phDriver_Pin_Func_t ePinFunc, phDriver_Pin_Config_t *pPinConfig)
+{
+    gpio_pin_config_t sGpioConfig;
+    uint8_t bPinNum;
+    uint8_t bPortGpio;
+	struct device *dev_gpioX;
+
+    port_interrupt_t eInterruptType;
+    /*port_pin_config_t sPinConfig =
+    {
+        .pullSelect = kPORT_PullDisable,
+        .slewRate = kPORT_FastSlewRate,
+        .passiveFilterEnable = kPORT_PassiveFilterDisable,
+        .openDrainEnable = kPORT_OpenDrainDisable,
+        .driveStrength = kPORT_HighDriveStrength,
+        .mux = kPORT_MuxAsGpio,
+        .lockRegister = kPORT_UnlockRegister
+    };*/
+
+    if((ePinFunc == PH_DRIVER_PINFUNC_BIDIR) || (pPinConfig == NULL))
+    {
+        return PH_DRIVER_ERROR | PH_COMP_DRIVER;
+    }
+
+    /* Extract the Pin, Gpio, Port details from dwPinNumber */
+	if(dwPinNumber<32)
+		{
+    		bPinNum = (uint8_t)(dwPinNumber);
+    		bPortGpio = (uint8_t)(0);
+		}
+	else if(dwPinNumber>=32)
+		{
+			bPinNum = (uint8_t)(dwPinNumber-32);
+    		bPortGpio = (uint8_t)(1);
+		}
+
+   /* sGpioConfig.pinDirection = (ePinFunc == PH_DRIVER_PINFUNC_OUTPUT)?GPIO_OUTPUT:GPIO_INPUT;
+    sGpioConfig.outputLogic  =  pPinConfig->bOutputLogic;
+    sPinConfig.pullSelect = (pPinConfig->bPullSelect == PH_DRIVER_PULL_DOWN)? kPORT_PullDown : kPORT_PullUp;
+
+    CLOCK_EnableClock(pPortsClock[bPortGpio]);
+    PORT_SetPinConfig((PORT_Type *)pPortsBaseAddr[bPortGpio], bPinNum, &sPinConfig);*/
+	if(bPortGpio == 0)
+		{
+			//获取GPIO Port的句柄
+			dev_gpioX  = DEVICE_DT_GET(DT_NODELABEL(gpio0));
+		}
+	else if(bPortGpio == 1)
+		{
+			//获取GPIO Port的句柄
+			dev_gpioX = DEVICE_DT_GET(DT_NODELABEL(gpio1));
+		}
+
+	switch( ePinFunc )
+		{
+		    case PH_DRIVER_PINFUNC_OUTPUT:
+				gpio_pin_configure(dev_gpioX, bPinNum, GPIO_OUTPUT);
+				break;
+			case PH_DRIVER_PINFUNC_INPUT:
+			gpio_pin_configure(dev_gpioX, bPinNum, GPIO_INPUT);
+				break;
+		}
+
+
+    if(ePinFunc == PH_DRIVER_PINFUNC_INTERRUPT)
+    {
+        /*eInterruptType = aInterruptTypes[(uint8_t)pPinConfig->eInterruptConfig];
+        GPIO_PortClearInterruptFlags((GPIO_Type *)pGpiosBaseAddr[bPortGpio], bPinNum);
+        PORT_SetPinInterruptConfig((PORT_Type *)pPortsBaseAddr[bPortGpio], bPinNum, eInterruptType);*/
+        gpio_pin_configure(dev_gpioX, bPinNum ,GPIO_INPUT);
+		 gpio_pin_interrupt_configure(dev_gpioX,bPinNum,GPIO_INT_EDGE_TO_ACTIVE);
+    }
+
+   // GPIO_PinInit((GPIO_Type *)pGpiosBaseAddr[bPortGpio], bPinNum, &sGpioConfig);
+
+    return PH_DRIVER_SUCCESS;
+}
+
+uint8_t phDriver_PinRead(uint32_t dwPinNumber, phDriver_Pin_Func_t ePinFunc)
+{
+    uint8_t bValue;
+    uint8_t bGpioNum;
+    uint8_t bPinNum;
+
+    /* Extract the Pin, Gpio details from dwPinNumber */
+    bPinNum = (uint8_t)(dwPinNumber & 0xFF);
+    bGpioNum = (uint8_t)((dwPinNumber & 0xFF00)>>8);
+
+    if(ePinFunc == PH_DRIVER_PINFUNC_INTERRUPT)
+    {
+        bValue = (uint8_t)((GPIO_PortGetInterruptFlags((GPIO_Type *)pGpiosBaseAddr[bGpioNum]) >> bPinNum) & 0x01);
+    }
+    else
+    {
+        bValue = (uint8_t)GPIO_PinRead((GPIO_Type *)pGpiosBaseAddr[bGpioNum], bPinNum);
+    }
+
+    return bValue;
+}
+
+phStatus_t phDriver_IRQPinPoll(uint32_t dwPinNumber, phDriver_Pin_Func_t ePinFunc, phDriver_Interrupt_Config_t eInterruptType)
+{
+    uint8_t    bGpioState = 0;
+
+    if ((eInterruptType != PH_DRIVER_INTERRUPT_RISINGEDGE) && (eInterruptType != PH_DRIVER_INTERRUPT_FALLINGEDGE))
+    {
+        return PH_DRIVER_ERROR | PH_COMP_DRIVER;
+    }
+
+    if (eInterruptType == PH_DRIVER_INTERRUPT_FALLINGEDGE)
+    {
+        bGpioState = 1;
+    }
+
+	while(phDriver_PinRead(dwPinNumber, ePinFunc) == bGpioState);
+
+    return PH_DRIVER_SUCCESS;
+}
+
+void phDriver_PinWrite(uint32_t dwPinNumber, uint8_t bValue)
+{
+    uint8_t bGpioNum;
+    uint8_t bPinNum;
+
+    /* Extract the Pin, Gpio details from dwPinNumber */
+    bPinNum = (uint8_t)(dwPinNumber & 0xFF);
+    bGpioNum = (uint8_t)((dwPinNumber & 0xFF00)>>8);
+
+    GPIO_PinWrite((GPIO_Type *)pGpiosBaseAddr[bGpioNum], bPinNum, bValue);
+}
+
+void phDriver_PinClearIntStatus(uint32_t dwPinNumber)
+{
+    uint8_t bGpioNum;
+    uint8_t bPinNum;
+
+    /* Extract the Pin, Gpio details from dwPinNumber */
+    bPinNum = (uint8_t)(dwPinNumber & 0xFF);
+    bGpioNum = (uint8_t)((dwPinNumber & 0xFF00)>>8);
+
+    GPIO_PortClearInterruptFlags((GPIO_Type *)pGpiosBaseAddr[bGpioNum], (1<<bPinNum));
+}
+
+phStatus_t phDriver_IRQPinRead(uint32_t dwPinNumber)
+{
+	phStatus_t bGpioVal = false;
+
+	bGpioVal = phDriver_PinRead(dwPinNumber, PH_DRIVER_PINFUNC_INPUT);
+
+	return bGpioVal;
+}
+
+void PIT0_IRQHandler(void)
+{
+    /* Clear interrupt flag.*/
+    PIT_ClearStatusFlags(PH_DRIVER_KSDK_PIT_TIMER, PH_DRIVER_KSDK_TIMER_CHANNEL, kPIT_TimerFlag);
+
+    /* Single shot timer. Stop it. */
+    PIT_StopTimer(PH_DRIVER_KSDK_PIT_TIMER, PH_DRIVER_KSDK_TIMER_CHANNEL);
+    PIT_DisableInterrupts(PH_DRIVER_KSDK_PIT_TIMER, PH_DRIVER_KSDK_TIMER_CHANNEL, kPIT_TimerInterruptEnable);
+
+    pPitTimerCallBack();
+
+}
+
+static void phDriver_PitTimerIsrCallBack(void)
+{
+    dwTimerExp = 1;
+}
+
+void phDriver_EnterCriticalSection(void)
+{
+    __disable_irq();
+}
+
+void phDriver_ExitCriticalSection(void)
+{
+    __enable_irq();
+}
